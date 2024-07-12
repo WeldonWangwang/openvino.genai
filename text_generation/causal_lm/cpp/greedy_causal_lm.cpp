@@ -60,22 +60,14 @@ void t1(ov::InferRequest lm, int64_t out_token, int64_t SPECIAL_EOS_TOKEN, size_
     constexpr size_t BATCH_SIZE = 1;
     auto start = std::chrono::system_clock::now();
     while (out_token != SPECIAL_EOS_TOKEN && seq_len < max_sequence_length) {
-        // std::cout << "infer 1\n";
         ++seq_len;
         lm.get_tensor("input_ids").data<int64_t>()[0] = out_token;
         lm.get_tensor("attention_mask").set_shape({BATCH_SIZE, seq_len});
         std::fill_n(lm.get_tensor("attention_mask").data<int64_t>(), seq_len, 1);
         position_ids.data<int64_t>()[0] = int64_t(seq_len - 1);
-        // auto current_time = std::chrono::system_clock::now();
-        // auto now = std::chrono::time_point_cast<std::chrono::milliseconds>(current_time).time_since_epoch().count();
-        // std::cout << "t1 start: " << now << std::endl;
         lm.start_async();
         lm.wait();
-        // lm.infer();
         text_streamer.put(out_token);
-        // auto current_time1 = std::chrono::system_clock::now();
-        // auto now1 = std::chrono::time_point_cast<std::chrono::milliseconds>(current_time1).time_since_epoch().count();
-        // std::cout << "t1 end: " << now1 << std::endl;
         logits = lm.get_tensor("logits").data<float>();
         out_token = std::max_element(logits, logits + vocab_size) - logits;
     }
@@ -93,22 +85,14 @@ void t2(ov::InferRequest lm, int64_t out_token, int64_t SPECIAL_EOS_TOKEN, size_
     constexpr size_t BATCH_SIZE = 1;
     auto start = std::chrono::system_clock::now();
     while (out_token != SPECIAL_EOS_TOKEN && seq_len < max_sequence_length) {
-        // std::cout << "infer 2\n";
         ++seq_len;
         lm.get_tensor("input_ids").data<int64_t>()[0] = out_token;
         lm.get_tensor("attention_mask").set_shape({BATCH_SIZE, seq_len});
         std::fill_n(lm.get_tensor("attention_mask").data<int64_t>(), seq_len, 1);
         position_ids.data<int64_t>()[0] = int64_t(seq_len - 1);
-        // auto current_time = std::chrono::system_clock::now();
-        // auto now = std::chrono::time_point_cast<std::chrono::milliseconds>(current_time).time_since_epoch().count();
-        // std::cout << "t2 start: " << now << std::endl;
         lm.start_async();
         lm.wait();
-        // lm.infer();
         // text_streamer.put(out_token);
-        // auto current_time1 = std::chrono::system_clock::now();
-        // auto now1 = std::chrono::time_point_cast<std::chrono::milliseconds>(current_time1).time_since_epoch().count();
-        // std::cout << "t2 end: " << now1 << std::endl;
         logits = lm.get_tensor("logits").data<float>();
         out_token = std::max_element(logits, logits + vocab_size) - logits;
     }
