@@ -108,6 +108,7 @@ int main(int argc, char* argv[]) try {
     if (argc != 4) {
         throw std::runtime_error(std::string{"Usage: "} + argv[0] + " <MODEL_DIR> '<PROMPT>' <DEVICE_NAME>");
     }
+    std::cout << ov::get_openvino_version() << std::endl;
     // Compile models
     ov::Core core;
     core.add_extension(OPENVINO_TOKENIZERS_PATH);  // OPENVINO_TOKENIZERS_PATH is defined in CMakeLists.txt
