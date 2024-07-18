@@ -101,9 +101,9 @@ void infer_task(char* prompt, ov::CompiledModel tokenizer_compile_model, ov::Com
                 throw std::runtime_error("EOS token ID not found in model's runtime information.");
             }
             start = std::chrono::system_clock::now();
+            ++seq_len;
             // std::cout << "max_sequence_length: " << max_sequence_length << std::endl;
             while (out_token != SPECIAL_EOS_TOKEN && seq_len < max_sequence_length+input_len) {
-                ++seq_len;
                 lm.get_tensor("input_ids").data<int64_t>()[0] = out_token;
                 lm.get_tensor("attention_mask").set_shape({BATCH_SIZE, seq_len});
                 std::fill_n(lm.get_tensor("attention_mask").data<int64_t>(), seq_len, 1);
@@ -114,13 +114,14 @@ void infer_task(char* prompt, ov::CompiledModel tokenizer_compile_model, ov::Com
                 // std::cout << "out_tokens: " << out_token << std::endl;
                 logits = lm.get_tensor("logits").data<float>();
                 out_token = std::max_element(logits, logits + vocab_size) - logits;
+                ++seq_len;
             }
             std::cout << log_tag << " seq_len = " << seq_len-input_len << std::endl;
             end = std::chrono::system_clock::now();
             diff = end-start;
             std::cout << log_tag << " Rest Tokens take time: " << diff.count() << " s\n";
-            std::cout << log_tag << " Average rest token latency(s): " << diff.count() / (seq_len-input_len) << std::endl;
-            std::cout << log_tag << " Rest Token/s: " << (seq_len-input_len) / diff.count()  << std::endl;
+            std::cout << log_tag << " Average rest token latency(s): " << diff.count() / (seq_len-input_len-1) << std::endl;
+            std::cout << log_tag << " Rest Token/s: " << (seq_len-input_len-1) / diff.count()  << std::endl;
             if (enable_stream) {
                 for (const auto& token : out_tokens) {
                     text_streamer.put(token);
