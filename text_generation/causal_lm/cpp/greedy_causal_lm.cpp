@@ -84,8 +84,8 @@ void infer_task(char* prompt, ov::CompiledModel tokenizer_compile_model, ov::Com
             auto start = std::chrono::system_clock::now();
             lm.infer();
             auto end = std::chrono::system_clock::now();
-            std::chrono::duration<double> diff = end-start;
-            std::cout << log_tag <<  " First token time: " << diff.count() << " s\n";
+            std::chrono::duration<double> first_token_time = end-start;
+            std::cout << log_tag <<  " First token time: " << first_token_time.count() << " s\n";
             size_t vocab_size = lm.get_tensor("logits").get_shape().back();
             float* logits = lm.get_tensor("logits").data<float>() + (seq_len - 1) * vocab_size;
             int64_t out_token = std::max_element(logits, logits + vocab_size) - logits;
@@ -118,10 +118,11 @@ void infer_task(char* prompt, ov::CompiledModel tokenizer_compile_model, ov::Com
             }
             std::cout << log_tag << " seq_len = " << seq_len-input_len << std::endl;
             end = std::chrono::system_clock::now();
-            diff = end-start;
+            std::chrono::duration<double> diff = end-start;
             std::cout << log_tag << " Rest Tokens take time: " << diff.count() << " s\n";
             std::cout << log_tag << " Average rest token latency(s): " << diff.count() / (seq_len-input_len-1) << std::endl;
             std::cout << log_tag << " Rest Token/s: " << (seq_len-input_len-1) / diff.count()  << std::endl;
+            std::cout << log_tag << " Infer time(s): " << first_token_time.count() + diff.count()  << std::endl;
             if (enable_stream) {
                 for (const auto& token : out_tokens) {
                     text_streamer.put(token);
