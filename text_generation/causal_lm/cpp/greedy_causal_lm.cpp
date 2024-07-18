@@ -152,6 +152,8 @@ int main(int argc, char* argv[]) try {
     ov::AnyMap config = {}; 
     if (device_name.find("MULTI") == 0) {
         config = {{"DEVICE_BIND_BUFFER","YES"},{"NUM_STREAMS","1"}};
+    } else if (device_name.find("HETERO") == 0) {
+        config = {{"MODEL_DISTRIBUTION_POLICY","PIPELINE_PARALLEL"},{"PERFORMANCE_HINT","THROUGHPUT"}};
     }
     ov::CompiledModel compile_model = core.compile_model(
         std::string{argv[1]} + "/openvino_model.xml", device_name, config);
