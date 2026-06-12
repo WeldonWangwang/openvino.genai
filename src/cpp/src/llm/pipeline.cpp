@@ -216,6 +216,7 @@ ov::genai::LLMPipeline::LLMPipeline(
     utils::extract_extensions_to_core(properties);
 
     std::shared_ptr<ov::Model> model = utils::read_model(models_path, properties);
+    const bool is_gguf_model = models_path.extension() == ".gguf";
 
     const auto generation_config = utils::from_config_json_if_exists(models_path);
     if (is_npu_requested) {
@@ -224,7 +225,7 @@ ov::genai::LLMPipeline::LLMPipeline(
         // If CB is invoked explicitly, create CB adapter as is and re-throw in case if internal issues
         auto [device_properties, scheduler_config] = utils::extract_scheduler_config(properties, utils::get_latency_oriented_scheduler_config());
         m_pimpl = std::make_unique<ContinuousBatchingAdapter>(model, tokenizer, scheduler_config, device, device_properties, generation_config, models_path);
-    } else if (attention_backend == PA_BACKEND) {
+    } else if (attention_backend == PA_BACKEND && !is_gguf_model) {
         try {
             // we need use CB only for x86 and arm64, as for other architectures like risc-v we can create Paged Attention based model
             // but cannot perform its inference later
@@ -259,6 +260,7 @@ ov::genai::LLMPipeline::LLMPipeline(
 
     // Read model and create tokenizer once to avoid double I/O during pipeline construction.
     std::shared_ptr<ov::Model> model = utils::read_model(models_path, properties);
+    const bool is_gguf_model = models_path.extension() == ".gguf";
     const Tokenizer tokenizer(models_path, properties);
 
     const auto generation_config = utils::from_config_json_if_exists(models_path);
@@ -268,7 +270,7 @@ ov::genai::LLMPipeline::LLMPipeline(
         // If CB is invoked explicitly, create CB adapter as is and re-throw in case if internal issues
         auto [device_properties, scheduler_config] = utils::extract_scheduler_config(properties, utils::get_latency_oriented_scheduler_config());
         m_pimpl = std::make_unique<ContinuousBatchingAdapter>(model, tokenizer, scheduler_config, device, device_properties, generation_config, models_path);
-    } else if (attention_backend == PA_BACKEND) {
+    } else if (attention_backend == PA_BACKEND && !is_gguf_model) {
         // try to call CB adapter one more time, but with safe guard to silent exception
         try {
             // we need use CB only for x86 and arm64, as for other architectures like risc-v we can create Paged Attention based model
